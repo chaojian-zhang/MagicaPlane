@@ -1,8 +1,7 @@
 {
   "profiles": {
     "MagicaPlane": {
-      "commandName": "Project",
-      "commandLineArgs": "\"C:\\Projects\\MagicaPlane\\BinaryOutput\\Test\""
+      "commandName": "Project"
     }
   }
 }
