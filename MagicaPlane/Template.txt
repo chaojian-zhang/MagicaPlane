@@ -1,0 +1,9 @@
+﻿const float volume[{{TotalGridSize}}] = float[{{TotalGridSize}}]({{IndexList}});
+
+float map(vec3 v) {
+	int indexRow = int(mod(v.x, {{Width}}));
+	int indexCol = int(mod(v.y, {{Length}}));
+	int indexHeight = int(mod(v.z, {{Height}}));
+	int index = indexRow + indexCol * {{Width}} + indexHeight * ({{Width}}*{{Length}});
+	return volume[index];
+}
