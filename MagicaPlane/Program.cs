@@ -80,7 +80,7 @@ namespace MagicaPlane
         /// Parse a given voxel layers folder, optionally override folder specific material file (provided as interface for MagicaPlaneProject program)
         /// </summary>
         /// <returns>Returns generated files; Used by MagicaPlaneProject</returns>
-        public static List<string> ParseFolder(string dir, Dictionary<string, int> materialFileOverride)
+        public static List<string> ParseFolder(string dir, Dictionary<string, byte> materialFileOverride)
         {
             var layers = Directory.EnumerateFiles(dir)
                                 .Where(f => Path.GetFileName(f) != MaterialDefinitionFile && int.TryParse(Path.GetFileNameWithoutExtension(f), out _))
@@ -103,9 +103,11 @@ namespace MagicaPlane
             int rows, columns;
             GetDimensions(File.ReadAllLines(layers.First()), out rows, out columns);
             // Read material definition
-            Dictionary<string, int> materials = materialFileOverride ?? ReadMaterial(material);
+            Dictionary<string, byte> materials = materialFileOverride ?? ReadMaterial(material);
             // Build index list
             StringBuilder builder = new StringBuilder();
+            // Prepare exporting .vox
+            Dictionary<Tuple<byte, byte, byte>, byte> voxels = new Dictionary<Tuple<byte, byte, byte>, byte>();
             // Load layers
             for (int z = 0; z < layers.Length; z++)
             {
@@ -117,6 +119,16 @@ namespace MagicaPlane
                 {
                     Console.WriteLine($"Layer dimension in file `{layers[z]}` ({tempRows} rows x {tempColumns} columns) " +
                         $"doesn't match expected lowest master layer `{layers.First()}` ({rows} rows x {columns} columns). Abort parsing.");
+                    return null;
+                }
+                if(tempRows > 256)
+                {
+                    Console.WriteLine($"Row count in file `{layers[z]}` ({tempRows} rows x {tempColumns} columns) exceeds max (256).");
+                    return null;
+                }
+                if (tempColumns > 256)
+                {
+                    Console.WriteLine($"Column count in file `{layers[z]}` ({tempRows} rows x {tempColumns} columns) exceeds max (256).");
                     return null;
                 }
                 // Parse each line
@@ -138,9 +150,12 @@ namespace MagicaPlane
                                 $"using `{replacement}` instead.");
                             col = replacement;
                         }
-                        int index = materials[col];
+                        byte index = materials[col];
                         // Set volume value
                         builder.Append($"{index},"); // Order: col, row, height
+                        // Add to voxel data
+                        if(index != 0)
+                            voxels.Add(new Tuple<byte, byte, byte>((byte)c, (byte)r, (byte)z), index);
                     }
                 }
             }
@@ -158,52 +173,21 @@ namespace MagicaPlane
             File.WriteAllText(shaderPath, shader);
             // Generate result as .vox
             string voxelPath = Path.Combine(dir, $"{folderName}.vox");
-            WriteVoxels(voxelPath, rows, columns, height);
+            WriteVoxels(voxelPath, voxels, rows, columns, height);
             // Return generated files
             return new List<string>() { shaderPath, voxelPath };
         }
 
-        private static void WriteVoxels(string voxelPath, int rows, int cols, int height)
+        private static void WriteVoxels(string voxelPath, Dictionary<Tuple<byte, byte, byte>, byte> voxels, int rows, int cols, int height)
         {
-            // Create a new Voxel volume (maximum dimensions are 256x256x256 right now)
-            var vox = new VoxWriter(/*(uint)cols, (uint)rows, (uint)height*/256, 256, 256);
-            // Just some random X/Y/Z walk
-            Random rand = new Random();
-            var x = 128;
-            var y = 128;
-            var z = 0;
-            for (var i = 0; i < 12000; i++)
-            {
-                //this sets a voxel at the x/y/z coordinate with color palette index c
-                //note that index 0 is an empty cell and will delete a voxel in case
-                //there is one already at that position
-                byte c = (byte)(rand.NextDouble() < 0.01 ? 2 : 1);
-                vox.SetVoxel(x, y, z, c);
-                vox.SetVoxel(255 - x, y, z, c);
-                vox.SetVoxel(x, 255 - y, z, c);
-                vox.SetVoxel(255 - x, 255 - y, z, c);
-                // Above creates a symmetrical pattern
+            var vox = new VoxWriter((uint)cols, (uint)rows, (uint)height);
 
-                int[,] steps = new int[,] {{ 1, 0, 0 },
-                    { -1, 0, 0 },
-                    { 0, 1, 0 },
-                    { 0, -1, 0 },
-                    { 1, 0, 0 },
-                    { -1, 0, 0 },
-                    { 0, 1, 0 },
-                    { 0, -1, 0 },
-                    { 0, 0, 1 },
-                    { 0, 0, -1 }
-                };
-                int set = (int)Math.Floor(rand.NextDouble() * 10);
-                x = (x + steps[set, 0]) % 256;
-                y = (y + steps[set, 1]) % 256;
-                z = (z + steps[set, 2]);
-                if (z < 0) 
-                    z = 0;
+            foreach (var v in voxels)
+            {
+                var key = v.Key;
+                var index = v.Value;
+                vox.SetVoxel(key.Item1, key.Item2, key.Item3, index);
             }
-            // Set color index #2
-            vox.Palette[1] = 0xffff8000;
             
             // Save to file
             vox.Export(voxelPath);
@@ -212,15 +196,15 @@ namespace MagicaPlane
         /// <summary>
         /// Read material definitions from file
         /// </summary>
-        public static Dictionary<string, int> ReadMaterial(string materialPath)
+        public static Dictionary<string, byte> ReadMaterial(string materialPath)
         {
-            Dictionary<string, int> materials = new Dictionary<string, int>();
+            Dictionary<string, byte> materials = new Dictionary<string, byte>();
             string[] lines = File.ReadAllLines(materialPath);
             foreach (var line in lines)
             {
                 string[] cols = line.Split(',');
                 string name = cols[0].ToLower();    // Take lower case
-                int index = Convert.ToInt32(cols[1]);
+                byte index = Convert.ToByte(cols[1]);
                 materials[name] = index;
             }
             return materials;

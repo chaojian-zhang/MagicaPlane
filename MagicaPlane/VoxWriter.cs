@@ -85,14 +85,14 @@ namespace MagicaPlane
                 // Set
                 if (colorIndex != 0)
                 {
-                    if (!Voxels.ContainsKey(key)) 
+                    if (!Voxels.ContainsKey(key))
                         VCount++;
                     Voxels[key] = colorIndex;
                 }
                 // Clear
                 else
                 {
-                    if (Voxels.ContainsKey(key)) 
+                    if (Voxels.ContainsKey(key))
                         VCount--;
                     Voxels.Remove(key);
                 }
@@ -100,7 +100,7 @@ namespace MagicaPlane
         }
         public void Export(string filePath)
         {
-            using (FileStream file = new FileStream(filePath, FileMode.CreateNew))
+            using (FileStream file = new FileStream(filePath, FileMode.Create))
             using (BinaryWriter writer = new BinaryWriter(file))
             {
                 AppendString(writer, "VOX ");
