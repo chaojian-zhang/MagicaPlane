@@ -7,9 +7,11 @@ using System.Text;
 
 namespace MagicaPlane
 {
-    class Program
+    public static class Program
     {
-        static void Main(string[] args)
+        public const string MaterialDefinitionFile = "material.csv";
+
+        public static void Main(string[] args)
         {
             // Check null argument
             if(args.Length == 0)
@@ -35,14 +37,16 @@ namespace MagicaPlane
                 // Check empty
                 if(Directory.GetFiles(dir).Length == 0)
                     Console.WriteLine("Input folder is empty.");
-                else if(!Directory.GetFiles(dir).Any(f => Path.GetFileName(f) == "material.csv"))
+                else if(!Directory.GetFiles(dir).Any(f => Path.GetFileName(f) == MaterialDefinitionFile))
                     Console.WriteLine("Input folder missing material definition.");
                 else
-                    ParseFolder(dir);
+                    ParseFolder(dir, null);
             }
         }
-
-        private static void InitializeFolder(int rows, int cols, int heights, string dir)
+        /// <summary>
+        /// Initialize structure for an empty folder
+        /// </summary>
+        public static void InitializeFolder(int rows, int cols, int heights, string dir)
         {
             // Write layers
             for (int f = 0; f < heights; f++)
@@ -63,28 +67,47 @@ namespace MagicaPlane
                 File.WriteAllText(Path.Combine(dir, $"{f + 1}.csv"), builder.ToString());
             }
             // Write material
-            File.WriteAllText(Path.Combine(dir, "material.csv"), "empty,0\ncustom,5");
+            File.WriteAllText(Path.Combine(dir, MaterialDefinitionFile), GetDefaultMaterialDefinition());
         }
 
-        private static void ParseFolder(string dir)
+        /// <summary>
+        /// Generate default material definition string
+        /// </summary>
+        public static string GetDefaultMaterialDefinition()
+            => "empty,0\ncustom,5";
+
+        /// <summary>
+        /// Parse a given voxel layers folder, optionally override folder specific material file (provided as interface for MagicaPlaneProject program)
+        /// </summary>
+        public static void ParseFolder(string dir, Dictionary<string, int> materialFileOverride)
         {
             var layers = Directory.EnumerateFiles(dir)
-                                .Where(f => Path.GetFileNameWithoutExtension(f) != "material" && int.TryParse(Path.GetFileNameWithoutExtension(f), out _))
+                                .Where(f => Path.GetFileName(f) != MaterialDefinitionFile && int.TryParse(Path.GetFileNameWithoutExtension(f), out _))
                                 .OrderBy(f => int.Parse(Path.GetFileNameWithoutExtension(f)))
                                 .ToArray();
-            string material = Directory.EnumerateFiles(dir).Single(f => Path.GetFileNameWithoutExtension(f) == "material");
+            string material = Directory.EnumerateFiles(dir).Single(f => Path.GetFileName(f) == MaterialDefinitionFile);
             // Determine dimension
             int height = layers.Length;
             int rows, columns;
             GetDimensions(File.ReadAllLines(layers.First()), out rows, out columns);
             // Read material definition
-            Dictionary<string, int> materials = ReadMaterial(material);
+            Dictionary<string, int> materials = materialFileOverride ?? ReadMaterial(material);
             // Build index list
             StringBuilder builder = new StringBuilder();
             // Load layers
             for (int z = 0; z < layers.Length; z++)
             {
                 string[] csvLines = File.ReadAllLines(layers[z]);
+                // Size validation
+                int tempRows, tempColumns;
+                GetDimensions(csvLines, out tempRows, out tempColumns);
+                if(tempRows != rows || tempColumns != columns)
+                {
+                    Console.WriteLine($"Layer dimension in file `{layers[z]}` ({tempRows} rows x {tempColumns} columns) " +
+                        $"doesn't match expected lowest master layer `{layers.First()}` ({rows} rows x {columns} columns). Abort parsing.");
+                    return;
+                }
+                // Parse each line
                 for (int r = 0; r < csvLines.Length; r++)
                 {
                     string line = csvLines[r];
@@ -111,7 +134,7 @@ namespace MagicaPlane
             }
             // remove additional comma
             builder.Remove(builder.Length - 1, 1);
-            // Generate result
+            // Generate result as shader
             string shaderPath = Path.Combine(dir, $"{Path.GetFileName(dir)}.txt");  // Name shader as name of folder
             string shader = ReadResource("Template.txt");
             shader = shader.Replace("{{TotalGridSize}}", $"{rows * columns * layers.Length}");
@@ -122,7 +145,10 @@ namespace MagicaPlane
             File.WriteAllText(shaderPath, shader);
         }
 
-        private static Dictionary<string, int> ReadMaterial(string materialPath)
+        /// <summary>
+        /// Read material definitions from file
+        /// </summary>
+        public static Dictionary<string, int> ReadMaterial(string materialPath)
         {
             Dictionary<string, int> materials = new Dictionary<string, int>();
             string[] lines = File.ReadAllLines(materialPath);
@@ -136,13 +162,19 @@ namespace MagicaPlane
             return materials;
         }
 
-        static void GetDimensions(string[] csvLines, out int rows, out int columns)
+        /// <summary>
+        /// Get dimension of file
+        /// </summary>
+        public static void GetDimensions(string[] csvLines, out int rows, out int columns)
         {
             rows = csvLines.Length;
             columns = csvLines[0].Split(',').Count();
         }
 
-        static string ReadResource(string name)
+        /// <summary>
+        /// Get embedded resource from the assembly
+        /// </summary>
+        private static string ReadResource(string name)
         {
             // Determine path
             var assembly = Assembly.GetExecutingAssembly();
