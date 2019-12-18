@@ -1,19 +1,19 @@
 # Motivation
 
-1. (Cause) MagicaVoxel is great for **visualization and rendering**, but I don't quite enjoy how its editing works. 
-2. (Reason) One might try to use custom editor then generate directly to `.vox` format, that doesn't work, or generate directly to `.schematic` format, that doesn't work as well. One might expect to use only **MagicaVoxel View** - but none of the formats it claims to support seems to have and well-defined specification I can find.
-3. (Alternative) There is **FileToVox** project, which unfortunately contains too many irrelavant code for my purpose.
+1. (Cause) MagicaVoxel is great for **visualization and rendering**, but there is one particular editing function that seems missing - **modify on reference/height planes**.
+2. (Reason) One might try to use custom editor then generate directly to `.vox` format, that doesn't work, or generate directly to `.schematic` format, that doesn't work as well. One might expect to use only **MagicaVoxel View** - but none of the formats it supports seems to have any well-defined specification I can find.
+3. (Alternative) There is **FileToVox** project, which unfortunately contains too many irrelavant code for this purpose.
 4. (Definition) This tool (was originally conceived to) converts sequence of same-dimension `.png` into a MagicaVoxel shader, which when executed can have the effect of generating a corresponding `.vox` object - thus allowing a **plane based editing** experience.
 	* But that is troublesome and require additional photo editing tools and coloring is troublesome, so instead we use *headless* `.csv` based approach.
 5. (Feature) Naturally, to workaround the 126x126x126 size limit, we will support breaking the volumes down into seperate pieces.
 6. (Future) Ideally we support better ways to exploit MagicaVoxel's `.vox` file format or MagicaVoxel Viewer more directly (e.g. support its *sparse oct tree* formats).
-7. (Future) I just don't like the way MagicaVoxel's documentation, specification, and format design, ideally I would make my own alternative solution, but to compare with MagicaVoxel will require too much work.
+7. (Future) Due to MagicaVoxel's lack of documentation, specification, and chunk based format design, ideally a more specialized alternative solution shall exist - or at least a dedicated **format converter**, but to compare with MagicaVoxel will require too much work.
 
 # Remaining Problems
 
-1. I don't even know the language format for **shader** file - does it support global variables, arrays, multi-dimension arrays? GL Shading language, per [here](https://github.com/CodingEric/Erics-MagicaVoxel-Shaders)?
+1. (Lack of Documentation) I don't even know the language format for **shader** file - does it support global variables, arrays, multi-dimension arrays? GL Shading language, per [here](https://github.com/CodingEric/Erics-MagicaVoxel-Shaders)?
 2. After some test, it turns out with this method (probably due to restriction of GLSL arrays) we can feed a maximum of **15x15x15** grid, and nothing more!
-	* Pending using Magical Voxel Viewer: https://twitter.com/ephtracy/status/687051581859168256 - however that will compromise editing
+	* Pending using Magical Voxel Viewer: https://twitter.com/ephtracy/status/687051581859168256 - however that will compromise editing.
 
 # Usage
 
