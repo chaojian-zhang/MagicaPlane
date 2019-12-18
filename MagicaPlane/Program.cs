@@ -63,7 +63,7 @@ namespace MagicaPlane
                 File.WriteAllText(Path.Combine(dir, $"{f + 1}.csv"), builder.ToString());
             }
             // Write material
-            File.WriteAllText(Path.Combine(dir, "material.csv"), "empty, 0\ncustom, 5");
+            File.WriteAllText(Path.Combine(dir, "material.csv"), "empty,0\ncustom,5");
         }
 
         private static void ParseFolder(string dir)
