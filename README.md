@@ -12,7 +12,8 @@
 # Remaining Problems
 
 1. I don't even know the language format for **shader** file - does it support global variables, arrays, multi-dimension arrays? GL Shading language, per [here](https://github.com/CodingEric/Erics-MagicaVoxel-Shaders)?
-2. After some test, it turns out with this method (probably due to restriction of GLSL arrays) we can feed a maximum of **15x15x15** grid, and nothing more! I am not happy with this.
+2. After some test, it turns out with this method (probably due to restriction of GLSL arrays) we can feed a maximum of **15x15x15** grid, and nothing more!
+	* Pending using Magical Voxel Viewer: https://twitter.com/ephtracy/status/687051581859168256 - however that will compromise editing
 
 # Usage
 
