@@ -1,0 +1,6 @@
+﻿Command format: folder [partName rows cols height] ...
+	- Where `[partName rows cols height]` part repeats and when specified will initialize subfolders for parts;
+	If `partName` already exist as subfolder, this program will initialize it only if it's empty;
+	- If `[partName rows cols height]` part is not available, this program will compile the project instead;
+	During compilation, the master `material.csv` will be used instead of part-specific `material.csv`;
+	After compilation, the compiled `.vox` files and `.txt` shader files will be copied to project folder.
