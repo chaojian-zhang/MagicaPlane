@@ -79,7 +79,7 @@ namespace MagicaPlane
         /// <param name="colorIndex">Number 0 will clear the voxel</param>
         public void SetVoxel(int x, int y, int z, byte colorIndex)
         {
-            if (x >= 0 && y >= 0 && z >= 0 && x < this.X && z < this.Y && z < this.Z)
+            if (x >= 0 && y >= 0 && z >= 0 && x < this.X && y < this.Y && z < this.Z)
             {
                 string key = x + "_" + y + "_" + z;
                 // Set
@@ -97,6 +97,8 @@ namespace MagicaPlane
                     Voxels.Remove(key);
                 }
             }
+            else
+                throw new ArgumentException("Unexpected size.");
         }
         public void Export(string filePath)
         {
