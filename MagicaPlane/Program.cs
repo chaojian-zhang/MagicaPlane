@@ -46,10 +46,10 @@ namespace MagicaPlane
         /// <summary>
         /// Initialize structure for an empty folder
         /// </summary>
-        public static void InitializeFolder(int rows, int cols, int heights, string dir)
+        public static void InitializeFolder(int rows, int cols, int height, string dir)
         {
             // Write layers
-            for (int f = 0; f < heights; f++)
+            for (int f = 0; f < height; f++)
             {
                 StringBuilder builder = new StringBuilder();
                 for (int r = 0; r < rows; r++)
@@ -79,13 +79,25 @@ namespace MagicaPlane
         /// <summary>
         /// Parse a given voxel layers folder, optionally override folder specific material file (provided as interface for MagicaPlaneProject program)
         /// </summary>
-        public static void ParseFolder(string dir, Dictionary<string, int> materialFileOverride)
+        /// <returns>Returns generated files; Used by MagicaPlaneProject</returns>
+        public static List<string> ParseFolder(string dir, Dictionary<string, int> materialFileOverride)
         {
             var layers = Directory.EnumerateFiles(dir)
                                 .Where(f => Path.GetFileName(f) != MaterialDefinitionFile && int.TryParse(Path.GetFileNameWithoutExtension(f), out _))
                                 .OrderBy(f => int.Parse(Path.GetFileNameWithoutExtension(f)))
                                 .ToArray();
-            string material = Directory.EnumerateFiles(dir).Single(f => Path.GetFileName(f) == MaterialDefinitionFile);
+            string material = Directory.EnumerateFiles(dir).SingleOrDefault(f => Path.GetFileName(f) == MaterialDefinitionFile);
+            // Validate folder
+            if(layers.Length == 0)
+            {
+                Console.WriteLine($"Folder `{dir}` doesn't contain any layer file.");
+                return null;
+            }
+            if (material == null)
+            {
+                Console.WriteLine($"Folder `{dir}` doesn't contain any material definition.");
+                return null;
+            }
             // Determine dimension
             int height = layers.Length;
             int rows, columns;
@@ -105,7 +117,7 @@ namespace MagicaPlane
                 {
                     Console.WriteLine($"Layer dimension in file `{layers[z]}` ({tempRows} rows x {tempColumns} columns) " +
                         $"doesn't match expected lowest master layer `{layers.First()}` ({rows} rows x {columns} columns). Abort parsing.");
-                    return;
+                    return null;
                 }
                 // Parse each line
                 for (int r = 0; r < csvLines.Length; r++)
@@ -132,10 +144,11 @@ namespace MagicaPlane
                     }
                 }
             }
-            // remove additional comma
+            // Remove additional comma
             builder.Remove(builder.Length - 1, 1);
             // Generate result as shader
-            string shaderPath = Path.Combine(dir, $"{Path.GetFileName(dir)}.txt");  // Name shader as name of folder
+            string folderName = Path.GetFileName(dir);  // Name shader as name of folder
+            string shaderPath = Path.Combine(dir, $"{folderName}.txt");
             string shader = ReadResource("Template.txt");
             shader = shader.Replace("{{TotalGridSize}}", $"{rows * columns * layers.Length}");
             shader = shader.Replace("{{IndexList}}", builder.ToString());
@@ -143,6 +156,57 @@ namespace MagicaPlane
             shader = shader.Replace("{{Length}}", $"{rows.ToString()}/*y*/");
             shader = shader.Replace("{{Height}}", $"{layers.Length.ToString()}/*z*/");
             File.WriteAllText(shaderPath, shader);
+            // Generate result as .vox
+            string voxelPath = Path.Combine(dir, $"{folderName}.vox");
+            WriteVoxels(voxelPath, rows, columns, height);
+            // Return generated files
+            return new List<string>() { shaderPath, voxelPath };
+        }
+
+        private static void WriteVoxels(string voxelPath, int rows, int cols, int height)
+        {
+            // Create a new Voxel volume (maximum dimensions are 256x256x256 right now)
+            var vox = new VoxWriter(/*(uint)cols, (uint)rows, (uint)height*/256, 256, 256);
+            // Just some random X/Y/Z walk
+            Random rand = new Random();
+            var x = 128;
+            var y = 128;
+            var z = 0;
+            for (var i = 0; i < 12000; i++)
+            {
+                //this sets a voxel at the x/y/z coordinate with color palette index c
+                //note that index 0 is an empty cell and will delete a voxel in case
+                //there is one already at that position
+                byte c = (byte)(rand.NextDouble() < 0.01 ? 2 : 1);
+                vox.SetVoxel(x, y, z, c);
+                vox.SetVoxel(255 - x, y, z, c);
+                vox.SetVoxel(x, 255 - y, z, c);
+                vox.SetVoxel(255 - x, 255 - y, z, c);
+                // Above creates a symmetrical pattern
+
+                int[,] steps = new int[,] {{ 1, 0, 0 },
+                    { -1, 0, 0 },
+                    { 0, 1, 0 },
+                    { 0, -1, 0 },
+                    { 1, 0, 0 },
+                    { -1, 0, 0 },
+                    { 0, 1, 0 },
+                    { 0, -1, 0 },
+                    { 0, 0, 1 },
+                    { 0, 0, -1 }
+                };
+                int set = (int)Math.Floor(rand.NextDouble() * 10);
+                x = (x + steps[set, 0]) % 256;
+                y = (y + steps[set, 1]) % 256;
+                z = (z + steps[set, 2]);
+                if (z < 0) 
+                    z = 0;
+            }
+            // Set color index #2
+            vox.Palette[1] = 0xffff8000;
+            
+            // Save to file
+            vox.Export(voxelPath);
         }
 
         /// <summary>
