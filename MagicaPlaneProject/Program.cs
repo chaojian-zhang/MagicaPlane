@@ -21,7 +21,7 @@ namespace MagicaPlaneProject
             {
                 string projectFolder = Path.GetFullPath(args[0]);
                 string materialFilePath = Path.Combine(projectFolder, MagicaPlane.Program.MaterialDefinitionFile);
-                Dictionary<string, int> materials = MagicaPlane.Program.ReadMaterial(materialFilePath);
+                Dictionary<string, byte> materials = MagicaPlane.Program.ReadMaterial(materialFilePath);
                 // Compile and keep track of generated files
                 List<string> resultFiles = new List<string>();
                 foreach (string subfolder in Directory.EnumerateDirectories(projectFolder))

@@ -341,3 +341,4 @@ healthchecksdb
 
 # Generated
 BinaryOutput
+Examples/**/*.vox
