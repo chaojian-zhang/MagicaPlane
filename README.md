@@ -6,7 +6,7 @@ This program takes in a `.csv` file describing layout of voxels on a given horiz
 
 Compile the project or download executables then use command line to compile sources.
 
-(Technical) This project doesn't deal with Magica Voxel native file formats except it generates shader source code; Refer to [MagicaVoxelWriter](https://github.com/chaojian-zhang/MagicaVoxelWriter) for direct manipulation of `.vox` format. This project in its current state is todo deprecated (also consider Zarbuz's [FileToVox](https://github.com/Zarbuz/FileToVox) as a more complete example). Pending effort implementing solutions for [MagicaVoxel Viewer](https://ephtracy.github.io/index.html?page=mv_renderer).
+(Technical) This project doesn't deal with Magica Voxel native file formats except it generates shader source code; Refer to [MagicaVoxelWriter](https://github.com/chaojian-zhang/MagicaVoxelWriter) for direct manipulation of `.vox` format. This project in its current state is to be deprecated (also consider Zarbuz's [FileToVox](https://github.com/Zarbuz/FileToVox) as a more complete example). Pending effort implementing solutions for [MagicaVoxel Viewer](https://ephtracy.github.io/index.html?page=mv_renderer).
 
 **Commands**
 
