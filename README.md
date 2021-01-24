@@ -6,6 +6,8 @@ This program takes in a `.csv` file describing layout of voxels on a given horiz
 
 Compile the project or download executables then use command line to compile sources.
 
+(Technical) This project doesn't deal with Magica Voxel native file formats except it generates shader source code; Refer to [MagicaVoxelWriter](https://github.com/chaojian-zhang/MagicaVoxelWriter) for direct manipulation of `.vox` format. This project in its current state is todo deprecated (also consider Zarbuz's [FileToVox](https://github.com/Zarbuz/FileToVox) as a more complete example). Pending effort implementing solutions for [MagicaVoxel Viewer](https://ephtracy.github.io/index.html?page=mv_renderer).
+
 **Commands**
 
 * `MagicaPlane folderpath rows columns height` (is this implemented?): Setup object folder, add corresponding filler cells and generate `.csv` files as a starting point (i.e. all cells filled with 'empty').
